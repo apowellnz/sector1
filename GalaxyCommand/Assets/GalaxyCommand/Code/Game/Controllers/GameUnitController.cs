@@ -43,6 +43,8 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
             }
 
             IsSelected = true;
+
+            EventsService.TiggerUnitSelectEvent(this,this.gameObject);
         }
 
         public void Start()
