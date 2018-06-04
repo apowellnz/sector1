@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class GameRootController : NetworkBehaviour {
+public class GameRootController : NetworkBehaviour
+{
 
     [SerializeField]
-    public GameObject Grid { get; set; }
+    public GameObject Grid;
 
 	// Use this for initialization
 	void Start () {
