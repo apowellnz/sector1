@@ -5,12 +5,14 @@ using UnityEngine.Networking;
 
 public class GameRootController : NetworkBehaviour {
 
+    [SerializeField]
     public GameObject Grid { get; set; }
 
 	// Use this for initialization
 	void Start () {
 
         Grid.transform.position = Vector3.zero;
+        
 	    
 	}
 	
