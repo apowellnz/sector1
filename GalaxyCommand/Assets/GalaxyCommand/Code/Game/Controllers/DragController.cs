@@ -26,10 +26,14 @@ public class DragController
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        GameUnitController.DeselectAll(new BaseEventData(EventSystem.current));
-        SelectionBoxImage.gameObject.SetActive(true);
-        _startPosition = eventData.position;
-        _selectionRect = new Rect();
+        if (Input.GetMouseButton(0))
+        {
+            GameUnitController.DeselectAll(new BaseEventData(EventSystem.current));
+            SelectionBoxImage.gameObject.SetActive(true);
+            _startPosition = eventData.position;
+            _selectionRect = new Rect();
+        }
+       
     }
 
     public void OnDrag(PointerEventData eventData)
