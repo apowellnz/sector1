@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Assets.GalaxyCommand.Code.Common;
 using Assets.GalaxyCommand.Code.Game.Controllers;
 using UnityEngine;
@@ -7,9 +8,9 @@ namespace Assets.GalaxyCommand.Code.Game.Services
 {
     public class GameUnitService
     {
-        public HashSet<GameObject> GetAllUnits()
+        public static HashSet<GameObject> GetAllUnits()
         {
-            return GameObject.FindGameObjectsWithTag(TagCollection.GameUnitTag).ToHashSet();
+            return GameObject.FindObjectsOfType<GameUnitController>().Select(c => c.gameObject).ToHashSet();
         }
 
 
