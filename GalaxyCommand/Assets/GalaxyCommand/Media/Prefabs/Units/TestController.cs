@@ -10,10 +10,10 @@ public class TestController : GameUnitController
     public Material Normal;
     public Material Selected;
 
-
-    public void Update()
+    public override void OverridableUpdate()
     {
         gameObject.GetComponentInChildren<Renderer>().material = IsSelected ? Selected : Normal;
+        base.OverridableUpdate();
     }
 
     public override void OnSelect(BaseEventData eventData)
