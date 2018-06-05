@@ -1,11 +1,11 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Assets.GalaxyCommand.Code.Game.Services
+namespace Assets.GalaxyCommand.Code.Game.Services.Events
 {
-    public class SelectUnityArg : EventArgs
+    public class SelectUnityEventArg : EventArgs
     {
-        public SelectUnityArg(GameObject gameObject)
+        public SelectUnityEventArg(GameObject gameObject)
         {
             SelectedGameObject = gameObject;
         }
