@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Assets.GalaxyCommand.Code.Game.Controllers;
 using Assets.GalaxyCommand.Code.Game.Services;
 using UnityEngine;
@@ -12,18 +11,16 @@ public class DragController
         , IBeginDragHandler
         , IDragHandler
         , IEndDragHandler
-        ,IPointerClickHandler
+        , IPointerClickHandler
 {
-    private Camera _camera
-    {
-        get
-        {
-            return FindObjectOfType<Camera>();
-        }
-    }
-
     private Rect _selectionRect;
     public Image SelectionBoxImage;
+
+    private Camera _camera
+    {
+        get { return FindObjectOfType<Camera>(); }
+    }
+
     private Vector2 _startPosition { get; set; }
 
 
@@ -67,13 +64,37 @@ public class DragController
     {
         SelectionBoxImage.gameObject.SetActive(false);
         foreach (var unit in GameUnitService.GetAllUnits())
-        {
             if (_selectionRect.Contains(_camera.WorldToScreenPoint(unit.transform.position)))
-            {
                 unit.GetComponent<GameUnitController>().OnSelect(eventData);
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        var results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventData, results);
+
+        float myDistance = 0;
+
+        foreach (var result in results)
+            if (result.gameObject == gameObject)
+            {
+                myDistance = result.distance;
+                break;
             }
-        }
-            
+
+        GameObject nextObject = null;
+        var maxDistance = Mathf.Infinity;
+
+        foreach (var result in results)
+            if (result.distance > myDistance && result.distance < maxDistance)
+            {
+                nextObject = result.gameObject;
+                maxDistance = result.distance;
+            }
+
+        if (nextObject)
+            ExecuteEvents.Execute<IPointerClickHandler>(nextObject, eventData,
+                (x, y) => { x.OnPointerClick((PointerEventData) y); });
     }
 
     // Use this for initialization
@@ -82,40 +103,5 @@ public class DragController
         if (SelectionBoxImage == null)
             throw new NullReferenceException("SelectionBoxImage is not set in the DragController.");
         SelectionBoxImage.gameObject.SetActive(false);
-
-    }
-
-    public void OnPointerClick(PointerEventData eventData)
-    {
-        List<RaycastResult> results = new List<RaycastResult>();
-        EventSystem.current.RaycastAll(eventData, results);
-
-        float myDistance = 0;
-
-        foreach (RaycastResult result in results)
-        {
-            if (result.gameObject == gameObject)
-            {
-                myDistance = result.distance;
-                break;
-            }
-        }
-
-        GameObject nextObject = null;
-        float maxDistance = Mathf.Infinity;
-
-        foreach (RaycastResult result in results)
-        {
-            if (result.distance > myDistance && result.distance < maxDistance)
-            {
-                nextObject = result.gameObject;
-                maxDistance = result.distance;
-            }
-        }
-
-        if (nextObject)
-        {
-            ExecuteEvents.Execute<IPointerClickHandler>(nextObject, eventData, (x, y) => { x.OnPointerClick((PointerEventData)y); });
-        }
     }
 }
