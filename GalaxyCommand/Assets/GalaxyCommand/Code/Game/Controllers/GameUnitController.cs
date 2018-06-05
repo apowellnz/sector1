@@ -42,16 +42,13 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
 
         public virtual void OnSelect(BaseEventData eventData)
         {
-
-           
-
             if (!Input.GetKey(KeyCode.RightControl) && !Input.GetKey(KeyCode.LeftControl))
             {
                 foreach (var unit in AllUnits)
                     unit.GetComponent<GameUnitController>().OnDeselect(eventData);
             }
             IsSelected = true;
-            //            EventsService.TiggerUnitSelectEvent(this,this.gameObject); // todo - turn this back on when completed testing
+            EventsService.TiggerUnitSelectEvent(this,this.gameObject); 
         }
 
         void Update()
