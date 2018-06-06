@@ -112,7 +112,7 @@ NavMeshSettings:
     accuratePlacement: 0
     debug:
       m_Flags: 0
-  m_NavMeshData: {fileID: 0}
+  m_NavMeshData: {fileID: 23800000, guid: 9c0e72a8eac01b44ea7e9ab87e61d468, type: 2}
 --- !u!1001 &78775764
 Prefab:
   m_ObjectHideFlags: 0
@@ -218,7 +218,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 4110549610622704, guid: 1bc48144e00bd674b82352c8b2c93623, type: 2}
       propertyPath: m_LocalPosition.z
-      value: -1.25
+      value: -5.36
       objectReference: {fileID: 0}
     - target: {fileID: 4110549610622704, guid: 1bc48144e00bd674b82352c8b2c93623, type: 2}
       propertyPath: m_LocalRotation.x
@@ -286,42 +286,6 @@ Prefab:
       propertyPath: m_RootOrder
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 223167213683432568, guid: b0547a4d34506a749869503da5e36908,
-        type: 2}
-      propertyPath: m_RenderMode
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 224707205514855734, guid: b0547a4d34506a749869503da5e36908,
-        type: 2}
-      propertyPath: m_AnchorMin.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 224707205514855734, guid: b0547a4d34506a749869503da5e36908,
-        type: 2}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 224707205514855734, guid: b0547a4d34506a749869503da5e36908,
-        type: 2}
-      propertyPath: m_AnchorMax.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 224707205514855734, guid: b0547a4d34506a749869503da5e36908,
-        type: 2}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 224707205514855734, guid: b0547a4d34506a749869503da5e36908,
-        type: 2}
-      propertyPath: m_AnchoredPosition.x
-      value: 353
-      objectReference: {fileID: 0}
-    - target: {fileID: 224707205514855734, guid: b0547a4d34506a749869503da5e36908,
-        type: 2}
-      propertyPath: m_AnchoredPosition.y
-      value: 382
-      objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 114287565121891912, guid: b0547a4d34506a749869503da5e36908, type: 2}
+    m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: b0547a4d34506a749869503da5e36908, type: 2}
   m_IsPrefabParent: 0

@@ -88,16 +88,24 @@ public class DragController
 
         GameObject nextObject = null;
         var maxDistance = Mathf.Infinity;
-
+        RaycastResult resultPosition = new RaycastResult();
         foreach (var result in results)
             if (result.distance > myDistance && result.distance < maxDistance)
             {
                 nextObject = result.gameObject;
+                resultPosition = result;
+                Debug.Log(nextObject);
                 maxDistance = result.distance;
             }
 
+
+
         if (nextObject)
-            ExecuteEvents.Execute<IPointerClickHandler>(nextObject, eventData,
+            ExecuteEvents.Execute<IPointerClickHandler>(nextObject, new PointerEventData(EventSystem.current)
+                {
+                    button = eventData.button,
+                    pointerCurrentRaycast = resultPosition
+                }, 
                 (x, y) => { x.OnPointerClick((PointerEventData) y); });
     }
 

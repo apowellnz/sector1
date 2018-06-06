@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using Assets.GalaxyCommand.Code.Common;
 using Assets.GalaxyCommand.Code.Game.Services;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.EventSystems;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 
 namespace Assets.GalaxyCommand.Code.Game.Controllers
 {
+    [RequireComponent(typeof(NavMeshAgent))]
     public abstract class GameUnitController :
         NetworkBehaviour
         , ISelectHandler
@@ -62,8 +64,7 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
 
         private void GroupingCheck()
         {
-            if(Input.GetKey(KeyCode.A))
-                Debug.Log("test");
+          
             if (InputService.IsPressingCtrl())
             {
                 foreach (var group in KeyBindingsService.GroupList)
@@ -127,6 +128,12 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
             _rectTransform = _selectionImage.GetComponent<RectTransform>();
             _selectionImage.SetActive(false);
             tag = TagCollection.GameUnitTag;
+        }
+
+        public void MovePosition(Transform targetTransform)
+        {
+            var navMesh = GetComponent<NavMeshAgent>();
+            navMesh.SetDestination(targetTransform.position);
         }
     }
 }
