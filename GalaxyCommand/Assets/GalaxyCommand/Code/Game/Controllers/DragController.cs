@@ -33,7 +33,6 @@ public class DragController
             _startPosition = eventData.position;
             _selectionRect = new Rect();
         }
-       
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -88,7 +87,7 @@ public class DragController
 
         GameObject nextObject = null;
         var maxDistance = Mathf.Infinity;
-        RaycastResult resultPosition = new RaycastResult();
+        var resultPosition = new RaycastResult();
         foreach (var result in results)
             if (result.distance > myDistance && result.distance < maxDistance)
             {
@@ -99,13 +98,12 @@ public class DragController
             }
 
 
-
         if (nextObject)
             ExecuteEvents.Execute<IPointerClickHandler>(nextObject, new PointerEventData(EventSystem.current)
                 {
                     button = eventData.button,
                     pointerCurrentRaycast = resultPosition
-                }, 
+                },
                 (x, y) => { x.OnPointerClick((PointerEventData) y); });
     }
 

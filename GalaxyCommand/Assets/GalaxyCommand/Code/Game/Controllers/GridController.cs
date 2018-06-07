@@ -1,27 +1,15 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using Assets.GalaxyCommand.Code.Game.Controllers;
-using Assets.GalaxyCommand.Code.Game.Services;
+﻿using Assets.GalaxyCommand.Code.Game.Services;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Experimental.UIElements;
 
-public class GridController : MonoBehaviour, IPointerClickHandler
+public class GridController 
+    : MonoBehaviour
+    , IPointerClickHandler
+    
 {
-
-    public GameObject TargetPositionObject;
     private bool _rightButtonPressed;
 
-    // Use this for initialization
-	void Start () {
-		if(TargetPositionObject == null) Debug.LogError("TargetPositionObject can not be null on Grid Controller");
-	}
-	
-	// Update is called once per frame
-	void Update ()
-	{
-
-	}
+    public GameObject TargetPositionObject;
 
     public void OnPointerClick(PointerEventData eventData)
     {
@@ -30,16 +18,27 @@ public class GridController : MonoBehaviour, IPointerClickHandler
             var target = Instantiate(TargetPositionObject);
             target.transform.position = eventData.pointerCurrentRaycast.worldPosition;
 
-
-
-            foreach (var unit in GameUnitService.GetSelectedUnits())
+            if (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt))
             {
-                unit.MovePosition(target.transform);
+                foreach (var unit in GameUnitService.GetSelectedUnits())
+                    unit.AddWayPoint(target.transform);
             }
-            Destroy(target, 5);
+            else
+            {
+                foreach (var unit in GameUnitService.GetSelectedUnits())
+                    unit.MovePosition(target.transform);
+            }
         }
-           
-
     }
 
+    // Use this for initialization
+    private void Start()
+    {
+        if (TargetPositionObject == null) Debug.LogError("TargetPositionObject can not be null on Grid Controller");
+    }
+
+    // Update is called once per frame
+    private void Update()
+    {
+    }
 }
