@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Assets.GalaxyCommand.Code.Common;
 using Assets.GalaxyCommand.Code.Game.Services;
 using UnityEngine;
@@ -21,6 +22,8 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
         private RectTransform _rectTransform;
         private GameObject _selectionImage;
         public GameObject SelectionBox;
+        private Queue<Transform> _wayPoints;
+        private NavMeshAgent _navMesh;
 
         protected static HashSet<GameUnitController> AllUnits
         {
@@ -58,11 +61,44 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
 
         private void Update()
         {
-            OverridableUpdate();
-            GroupingCheck();
+            UpdateOverridable();
+            UpdateGroupingCheck();
+            UpdateSelectionBox();
+            UpdateCheckWaypoints();
+            UpdateAvoidencePriority();
         }
 
-        private void GroupingCheck()
+        private void UpdateAvoidencePriority()
+        {
+            var p = _navMesh.desiredVelocity.x + _navMesh.desiredVelocity.y + _navMesh.desiredVelocity.z;
+            if (p > 80) p = 99;
+            if (p < 10) p = 0;
+            _navMesh.avoidancePriority = (int) p;
+        }
+
+        private void UpdateCheckWaypoints()
+        {
+            
+            if (WayPoints.Any() && _navMesh.remainingDistance<= 0.5f)
+            {
+                MovePosition(WayPoints.Dequeue(),false);
+            }
+        }
+
+        private void UpdateSelectionBox()
+        {
+            _selectionImage.SetActive(IsSelected);
+            if (IsSelected)
+            {
+                var rect = GameUnitService.GetBoundsOfUnity(this);
+
+                _rectTransform.position = new Vector2(rect.xMin + rect.width / 2, rect.yMin + rect.height / 2);
+                _rectTransform.sizeDelta = new Vector2(rect.width, rect.height);
+                _selectionImage.GetComponentInChildren<Text>().text = Group;
+            }
+        }
+
+        private void UpdateGroupingCheck()
         {
           
             if (InputService.IsPressingCtrl())
@@ -103,22 +139,15 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
                 unit.Group = group;
         }
 
-        public virtual void OverridableUpdate()
+        public virtual void UpdateOverridable()
         {
-            _selectionImage.SetActive(IsSelected);
-            if (IsSelected)
-            {
-                var rect = GameUnitService.GetBoundsOfUnity(this);
-
-                _rectTransform.position = new Vector2(rect.xMin + rect.width / 2, rect.yMin + rect.height / 2);
-                _rectTransform.sizeDelta = new Vector2(rect.width, rect.height);
-                _selectionImage.GetComponentInChildren<Text>().text = Group;
-            }
+          
         }
 
         public void Start()
         {
             _localCanvas = gameObject.GetComponentInChildren<Canvas>();
+            _navMesh = GetComponent<NavMeshAgent>();
             if (_localCanvas == null)
                 throw new NullReferenceException("No Ship canvas was detected.");
             _localCanvas.transform.SetParent(transform, true);
@@ -128,12 +157,31 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
             _rectTransform = _selectionImage.GetComponent<RectTransform>();
             _selectionImage.SetActive(false);
             tag = TagCollection.GameUnitTag;
+
         }
 
-        public void MovePosition(Transform targetTransform)
+        public void MovePosition(Transform targetTransform,bool clearWaypoints = true)
         {
-            var navMesh = GetComponent<NavMeshAgent>();
-            navMesh.SetDestination(targetTransform.position);
+            
+            _navMesh.SetDestination(targetTransform.position);
+            Destroy(targetTransform.gameObject,3);
+            if (clearWaypoints)
+                WayPoints.Clear();
+        }
+
+        public void AddWayPoint(Transform targetTransform)
+        {
+            WayPoints.Enqueue(targetTransform);
+        }
+
+        public Queue<Transform> WayPoints
+        {
+            get
+            {
+                if(_wayPoints == null) _wayPoints = new Queue<Transform>();
+                return _wayPoints;
+            }
+            set { _wayPoints = value; }
         }
     }
 }
