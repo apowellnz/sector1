@@ -24,8 +24,6 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
         private GameObject _selectionImage;
         private Queue<Transform> _wayPoints;
         public GameObject SelectionBox;
-        private Queue<Transform> _wayPoints;
-        private NavMeshAgent _navMesh;
 
         public UnitSizeEnum UnitSize;
 
@@ -83,23 +81,11 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
         }
 
         private void UpdateAvoidencePriority()
-<<<<<<< HEAD
-=======
         {
-            var p = _navMesh.desiredVelocity.x + _navMesh.desiredVelocity.y + _navMesh.desiredVelocity.z;
-            if (p > 80) p = 99;
-            if (p < 10) p = 0;
-            _navMesh.avoidancePriority = (int) p;
+            _navMesh.avoidancePriority = (int)_navMesh.remainingDistance + (int)UnitSize;
         }
 
-        private void UpdateCheckWaypoints()
-        {
-            
-            if (WayPoints.Any() && _navMesh.remainingDistance<= 0.5f)
-            {
-                MovePosition(WayPoints.Dequeue(),false);
-            }
-        }
+
 
         private void UpdateSelectionBox()
         {
@@ -114,11 +100,7 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
             }
         }
 
-        private void UpdateGroupingCheck()
->>>>>>> 2c6da032990a682489f7db1e9872ad665344ba9e
-        {
-            _navMesh.avoidancePriority = (int) _navMesh.remainingDistance + (int) UnitSize;
-        }
+       
 
         private void UpdateCheckWaypoints()
         {
@@ -126,18 +108,7 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
                 MovePosition(WayPoints.Dequeue(), false);
         }
 
-        private void UpdateSelectionBox()
-        {
-            _selectionImage.SetActive(IsSelected);
-            if (IsSelected)
-            {
-                var rect = GameUnitService.GetBoundsOfUnity(this);
-
-                _rectTransform.position = new Vector2(rect.xMin + rect.width / 2, rect.yMin + rect.height / 2);
-                _rectTransform.sizeDelta = new Vector2(rect.width, rect.height);
-                _selectionImage.GetComponentInChildren<Text>().text = Group;
-            }
-        }
+    
 
         private void UpdateGroupingCheck()
         {
@@ -169,10 +140,7 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
 
         public virtual void UpdateOverridable()
         {
-<<<<<<< HEAD
-=======
-          
->>>>>>> 2c6da032990a682489f7db1e9872ad665344ba9e
+
         }
 
         public void Start()
@@ -191,19 +159,10 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
 
         }
 
-<<<<<<< HEAD
-        public void MovePosition(Transform targetTransform, bool clearWaypoints = true)
-        {
-            _navMesh.SetDestination(targetTransform.position);
-            Destroy(targetTransform.gameObject, 3);
-            if (clearWaypoints)
-                WayPoints.Clear();
-        }
 
-        public void AddWayPoint(Transform targetTransform)
-        {
-            WayPoints.Enqueue(targetTransform);
-=======
+
+
+
         public void MovePosition(Transform targetTransform,bool clearWaypoints = true)
         {
             
@@ -218,15 +177,6 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
             WayPoints.Enqueue(targetTransform);
         }
 
-        public Queue<Transform> WayPoints
-        {
-            get
-            {
-                if(_wayPoints == null) _wayPoints = new Queue<Transform>();
-                return _wayPoints;
-            }
-            set { _wayPoints = value; }
->>>>>>> 2c6da032990a682489f7db1e9872ad665344ba9e
-        }
+
     }
 }
