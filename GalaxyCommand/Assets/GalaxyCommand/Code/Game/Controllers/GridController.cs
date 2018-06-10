@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using Assets.GalaxyCommand.Code.Game.Services;
-using com.t7t.formation;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -12,31 +11,36 @@ public class GridController
     private bool _rightButtonPressed;
 
     public GameObject TargetPositionObject;
+    private FormationsSerivce _formationService;
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (eventData.button == PointerEventData.InputButton.Right)
+        if (eventData.button == PointerEventData.InputButton.Right && GameUnitService.GetSelectedUnits().Any())
         {
             var target = Instantiate(TargetPositionObject);
             target.transform.position = eventData.pointerCurrentRaycast.worldPosition;
-            var selectedUnits = GameUnitService.GetSelectedUnits().Select(g => g.gameObject).ToList();
-            FormationGrid formationGrid = FormationManager.GetFormationGridInstance();
-
             if (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt))
             {
-                foreach (var unit in GameUnitService.GetSelectedUnits())
-                    unit.AddWayPoint(target.transform);
-
-                
-                
+                var selectedUnits = GameUnitService.GetSelectedUnits();
+                Vector3 lastWaypoint = selectedUnits.First().WayPoints.Any()
+                    ? selectedUnits.First().WayPoints.Peek()
+                    : selectedUnits.First().transform.position;
+                var formation = _formationService.GetFomation(target.transform, selectedUnits, lastWaypoint, FormationType.Lines);
+                foreach (var waypoints in formation)
+                {
+                    waypoints.Value.AddWayPoint(waypoints.Key);
+                }
             }
             else
             {
-                
-                
-                formationGrid.SetAnchorTransform(target.transform);
-                formationGrid.AssignObjectsToGrid(selectedUnits); 
-                formationGrid.ChangeState(FormationStates.Move);
+                if (GameUnitService.GetSelectedUnits().Any())
+                {
+                    var formation = _formationService.GetFomation(target.transform, GameUnitService.GetSelectedUnits(), GameUnitService.GetSelectedUnits().First().transform.position, FormationType.Lines);
+                    foreach (var waypoints in formation)
+                    {
+                        waypoints.Value.MovePosition(waypoints.Key);
+                    }
+                }
             }
         }
     }
@@ -45,10 +49,7 @@ public class GridController
     private void Start()
     {
         if (TargetPositionObject == null) Debug.LogError("TargetPositionObject can not be null on Grid Controller");
+        _formationService = new FormationsSerivce(TargetPositionObject);
     }
 
-    // Update is called once per frame
-    private void Update()
-    {
-    }
 }

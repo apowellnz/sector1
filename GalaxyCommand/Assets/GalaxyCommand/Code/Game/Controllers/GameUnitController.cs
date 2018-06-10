@@ -22,7 +22,7 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
         private NavMeshAgent _navMesh;
         private RectTransform _rectTransform;
         private GameObject _selectionImage;
-        private Queue<Transform> _wayPoints;
+        private Queue<Vector3> _wayPoints;
         public GameObject SelectionBox;
 
         public UnitSizeEnum UnitSize;
@@ -36,11 +36,11 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
 
         public string Group { get; set; }
 
-        public Queue<Transform> WayPoints
+        public Queue<Vector3> WayPoints
         {
             get
             {
-                if (_wayPoints == null) _wayPoints = new Queue<Transform>();
+                if (_wayPoints == null) _wayPoints = new Queue<Vector3>();
                 return _wayPoints;
             }
             set { _wayPoints = value; }
@@ -104,8 +104,8 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
 
         private void UpdateCheckWaypoints()
         {
-//            if (WayPoints.Any() && _navMesh.remainingDistance <= 0.5f)
-                //MovePosition(WayPoints.Dequeue(), false);
+            if (WayPoints.Any() && _navMesh.remainingDistance <= 0.5f)
+                MovePosition(WayPoints.Dequeue(), false);
         }
 
     
@@ -171,7 +171,7 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
                 WayPoints.Clear();
         }
 
-        public void AddWayPoint(Transform targetTransform)
+        public void AddWayPoint(Vector3 targetTransform)
         {
             WayPoints.Enqueue(targetTransform);
         }
