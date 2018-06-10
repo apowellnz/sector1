@@ -73,7 +73,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1353504046659806}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.22, y: 0.5000001, z: -4.62}
+  m_LocalPosition: {x: -3.73, y: 0.5000001, z: 1.77}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 4303395442504342}
@@ -107,7 +107,6 @@ MeshRenderer:
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
-  m_RenderingLayerMask: 4294967295
   m_Materials:
   - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
   m_StaticBatchInfo:
@@ -181,6 +180,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SelectionBox: {fileID: 1468402499335554, guid: be27c26d61d1c7d42ac7959db9bbefb2,
     type: 2}
+  UnitSize: 0
   Normal: {fileID: 2100000, guid: 31c87975e44cc4349853cfe76736dfd6, type: 2}
   Selected: {fileID: 2100000, guid: 321bb0e49a763944eaf93ec9e22d3632, type: 2}
 --- !u!114 &114628255847303436
@@ -228,7 +228,7 @@ CapsuleCollider:
   m_GameObject: {fileID: 1353504046659806}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   m_Radius: 1
   m_Height: 2
   m_Direction: 1
