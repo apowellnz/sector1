@@ -34,13 +34,15 @@ namespace Assets.GalaxyCommand.Code.Game.Services
                 case FormationType.Lines:
                     var rows = units.Count / _maxRows;
                     var startY = 0f;
-                    var startX = Mathf.Round(_maxRows / 2) * -1;
+                    var orginalX = 0f;
+                    var startX = orginalX = Mathf.Round(_maxRows / 2) * -1;
 
                     for (var r = 0; r < rows; r++)
                     {
                         for (var j = 0; j < _maxRows; j++)
                             startX = AddWaypoint(unitQueue, startX, formationAnchor, startY, customerGrid);
-                        startY += -1f;
+                        startY += 3f;
+                        startX = orginalX;
                     }
                     startX = Mathf.Round(unitQueue.Count / 2) * -1;
                     do
@@ -58,13 +60,16 @@ namespace Assets.GalaxyCommand.Code.Game.Services
             float startY,
             Dictionary<Vector3, GameUnitController> customerGrid)
         {
-            var newUnit = _unitQueue.Dequeue();
-            var agent = newUnit.GetComponentInChildren<NavMeshAgent>();
-            startX += agent.radius * 2;
-            var wayPoint = GameObject.Instantiate(_waypointObject);
-            wayPoint.transform.parent = formationAnchor.transform;
-            wayPoint.transform.localPosition = new Vector3(startX, 0f, startY);
-            customerGrid.Add(wayPoint.transform.position, newUnit);
+            if (_unitQueue.Any())
+            {
+                var nextUnit = _unitQueue.Dequeue();
+                var agent = nextUnit.GetComponentInChildren<NavMeshAgent>();
+                startX += agent.radius * 2;
+                var wayPoint = GameObject.Instantiate(_waypointObject);
+                wayPoint.transform.parent = formationAnchor.transform;
+                wayPoint.transform.localPosition = new Vector3(startX, 0f, startY);
+                customerGrid.Add(wayPoint.transform.position, nextUnit);
+            }
             return startX;
         }
     }

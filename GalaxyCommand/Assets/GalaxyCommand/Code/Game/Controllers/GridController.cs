@@ -42,6 +42,7 @@ public class GridController
                     }
                 }
             }
+            Destroy(target);
         }
     }
 
@@ -49,7 +50,7 @@ public class GridController
     private void Start()
     {
         if (TargetPositionObject == null) Debug.LogError("TargetPositionObject can not be null on Grid Controller");
-        _formationService = new FormationsSerivce(TargetPositionObject);
+        _formationService = new FormationsSerivce(TargetPositionObject,6);
     }
 
 }
