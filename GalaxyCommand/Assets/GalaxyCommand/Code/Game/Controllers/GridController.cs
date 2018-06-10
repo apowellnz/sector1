@@ -19,16 +19,21 @@ public class GridController
         {
             var target = Instantiate(TargetPositionObject);
             target.transform.position = eventData.pointerCurrentRaycast.worldPosition;
+            var selectedUnits = GameUnitService.GetSelectedUnits().Select(g => g.gameObject).ToList();
+            FormationGrid formationGrid = FormationManager.GetFormationGridInstance();
 
             if (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt))
             {
                 foreach (var unit in GameUnitService.GetSelectedUnits())
                     unit.AddWayPoint(target.transform);
+
+                
+                
             }
             else
             {
-                var selectedUnits = GameUnitService.GetSelectedUnits().Select(g => g.gameObject).ToList();
-                FormationGrid formationGrid = FormationManager.GetFormationGridInstance();
+                
+                
                 formationGrid.SetAnchorTransform(target.transform);
                 formationGrid.AssignObjectsToGrid(selectedUnits); 
                 formationGrid.ChangeState(FormationStates.Move);

@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class DragController
+public class SelectionHandler
     : MonoBehaviour
         , IBeginDragHandler
         , IDragHandler
@@ -71,6 +71,10 @@ public class DragController
                 unit.GetComponent<GameUnitController>().OnSelect(eventData);
     }
 
+    /// <summary>
+    /// Will loop through all the ray cast hits and get the first one past the invisble drag image
+    /// </summary>
+    /// <param name="eventData"></param>
     public void OnPointerClick(PointerEventData eventData)
     {
         var results = new List<RaycastResult>();
@@ -110,7 +114,7 @@ public class DragController
     public void Start()
     {
         if (SelectionBoxImage == null)
-            throw new NullReferenceException("SelectionBoxImage is not set in the DragController.");
+            throw new NullReferenceException("SelectionBoxImage is not set in the SelectionHandler.");
         SelectionBoxImage.gameObject.SetActive(false);
     }
 }

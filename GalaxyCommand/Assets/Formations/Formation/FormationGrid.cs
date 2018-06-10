@@ -32,39 +32,7 @@ namespace com.t7t.formation
      * 
      * 
      */
-
-
-    // TODO LIST:
-    //              Does anchor need rigidbody? Probably not.
-
-    public enum GridTypes
-    {
-        None,
-        Box9,
-        RightFlank5,
-        LeftFlank5,
-        Wedge9,
-        Line8,
-        StaggeredLine8,
-        Column10,
-        Custom,
-        Function,
-        DynamicLine
-    }
-    // Custom = load from file
-    // Function is function based on id
-
-    /* Formation states, see above */
-    public enum FormationStates
-    {
-        Form,
-        Move,
-        Arrive,
-        Disband
-    }
-
-
-    public class FormationGrid : MonoBehaviour
+     public class FormationGrid : MonoBehaviour
     {
         /* When a unit straggles too far behind it grid point use this acceleration multiplier*/
         public float accelerationStraggler = 1.2f;
@@ -105,7 +73,8 @@ namespace com.t7t.formation
         protected bool hasSound = true;
 
         public LayerMask mask;
-        [SerializeField] protected float maximumAcceleration = 10.0f;
+        [SerializeField]
+        protected float maximumAcceleration = 10.0f;
 
         [SerializeField]
         protected float maximumVelocity = 4.0F; // Make this a bit higher than as NavMesh speed (=maximum speed)
@@ -118,24 +87,30 @@ namespace com.t7t.formation
 
         protected bool positionDirty;
 
-        [SerializeField] protected float randomizeOffset = 0.2F
+        [SerializeField]
+        protected float randomizeOffset = 0.2F
             ; // If this value >0 then the FormationGridPoint offsets are randomized a little with this max distance
 
         protected float reRandomizeNextTime;
 
         protected float reRandomizeOffsets;
-        [SerializeField] protected float reRandomizeTimeMax = 4.0F; // Maximum time before reRandomizing the offsets
-        [SerializeField] protected float reRandomizeTimeMin = 2.0F; // Minimum time before reRandomizing the offsets
+        [SerializeField]
+        protected float reRandomizeTimeMax = 4.0F; // Maximum time before reRandomizing the offsets
+        [SerializeField]
+        protected float reRandomizeTimeMin = 2.0F; // Minimum time before reRandomizing the offsets
         protected bool rotationDirty;
 
         /* Smoothen the rotation in Update() Quaternion.Slerp*/
         public float smoothRotation = 2.0F; // smooth rotation
 
-        [SerializeField] protected FormationStates state = FormationStates.Form;
-        [SerializeField] protected bool useGravity = true;
+        [SerializeField]
+        protected FormationStates state = FormationStates.Form;
+        [SerializeField]
+        protected bool useGravity = true;
 
         /* If true then the grid is shown by means of colored spheres, see FormationGridPoint*/
-        [SerializeField] protected bool visualizeGrid = true;
+        [SerializeField]
+        protected bool visualizeGrid = true;
 
 
         private void Awake()
@@ -397,8 +372,7 @@ namespace com.t7t.formation
 
             if (state == FormationStates.Move)
             {
-                if ((oldPosition - anchorPosition).sqrMagnitude > 0.001f * 0.001f
-                ) // TODO: potentially we can do this by checking if target has been reached
+                if ((oldPosition - anchorPosition).sqrMagnitude > 0.001f * 0.001f) // TODO: potentially we can do this by checking if target has been reached
                     positionDirty = true;
                 else
                     positionDirty = false;
@@ -824,10 +798,12 @@ namespace com.t7t.formation
 
 
         // Assign the objects in a list to the FormationGridPoint(s) in the gridPoints list
-        public bool AssignObjectsToGrid(List<GameObject> list)
+        public bool AssignObjectsToGrid(List<GameObject> list, bool IsWaypoint = false)
         {
             var result = true;
-            gridPoints.Clear();
+            if(IsWaypoint == false)
+                gridPoints.Clear();
+
             transform.LookAt(list.First().transform);
             CalculateGrid(GridTypes.DynamicLine);
             for (var i = 0; i < list.Count; i++)
