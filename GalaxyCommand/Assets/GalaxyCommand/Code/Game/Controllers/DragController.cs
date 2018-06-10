@@ -93,7 +93,6 @@ public class DragController
             {
                 nextObject = result.gameObject;
                 resultPosition = result;
-                Debug.Log(nextObject);
                 maxDistance = result.distance;
             }
 

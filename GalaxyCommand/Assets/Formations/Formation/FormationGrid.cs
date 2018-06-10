@@ -1,15 +1,13 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Assets.GalaxyCommand.Code.Game.Controllers;
 using Assets.GalaxyCommand.Code.Game.Services;
+using com.t7t.utilities;
 using UnityEngine;
 using UnityEngine.AI;
-using com.t7t.utilities;
 
 namespace com.t7t.formation
 {
-
     /**
      * This is the key class which implements the FormationGrid setup and movement (=following ths FormationAnchor).
      * It uses an anchor, not a leader.
@@ -30,7 +28,7 @@ namespace com.t7t.formation
      * 
      * Key properties: state, anchor, gridtype, gridpoints, visualizegrid
      * 
-     * Key Methods: ChangeState, ChangeGridTo, Update, SetAnchor, SetupGrid, AssignObjectsToGrid
+     * Key Methods: ChangeState, CalculateGrid, Update, SetAnchor, SetupGrid, AssignObjectsToGrid
      * 
      * 
      */
@@ -39,120 +37,110 @@ namespace com.t7t.formation
     // TODO LIST:
     //              Does anchor need rigidbody? Probably not.
 
-    public enum GridTypes { None, Box9, RightFlank5, LeftFlank5, Wedge9, Line8, StaggeredLine8, Column10, Custom, Function,
-        Dynamic
-    };
+    public enum GridTypes
+    {
+        None,
+        Box9,
+        RightFlank5,
+        LeftFlank5,
+        Wedge9,
+        Line8,
+        StaggeredLine8,
+        Column10,
+        Custom,
+        Function,
+        DynamicLine
+    }
     // Custom = load from file
     // Function is function based on id
 
     /* Formation states, see above */
-    public enum FormationStates { Form, Move, Arrive, Disband };
-
-
-    /* Movement type
-     * 
-     *  CharacterController: requires each assigned unit to have a character controller which moves through the CharacterController.Move method.
-     *  
-     *  RigidBody: requires each assigned unit to have a rigidbody which moves through getting a velocity assigned.
-     * 
-     */
-    public enum MovementType { CharacterController, RigidBody };
-
+    public enum FormationStates
+    {
+        Form,
+        Move,
+        Arrive,
+        Disband
+    }
 
 
     public class FormationGrid : MonoBehaviour
     {
-
-        [SerializeField]        protected FormationStates state = FormationStates.Form;
+        /* When a unit straggles too far behind it grid point use this acceleration multiplier*/
+        public float accelerationStraggler = 1.2f;
 
         [Header("Anchor")]
-        /* Link the FormationAnchor here */
-        [SerializeField]        protected GameObject    anchor;
+        /* Link the FormationAnchor here */ [SerializeField] protected GameObject anchor;
 
-        /* A series of getters which return anchor properties */
-        #region anchorgetters
-        [SerializeField]        protected Transform     anchorTransform
-        {
-            get { return anchor.transform; }
-        }
-        [SerializeField]        protected Vector3       anchorPosition
-        {
-            get { return anchor.transform.position; }
-        }
-        [SerializeField]        protected Quaternion    anchorRotation
-        {
-            get { return anchor.transform.rotation; }
-        }
-        #endregion
+        protected AudioSource audioSource;
 
-        
-        [Header("Grid")]
-        /* Grid types detrmining what the formation looks like */
-        [SerializeField]    protected GridTypes gridType = GridTypes.None;
+        [Header("Disband")] [SerializeField] protected float disbandDuration = 3.0F;
 
-        /* List of FormationGridPoints which make up the formation */
-        [SerializeField]    protected List<FormationGridPoint> gridPoints;
+        protected bool disbanded;
+        [SerializeField] protected float disbandRadius = 3.0F;
+        protected float disbandTimer;
 
-        /* Scale factor of the grid used in CalculatePositionsAllGridPoints to enlarged the formation uniformly*/
-        [SerializeField]    protected float gridScale = 2.0F;
-
-        /* If true then the grid is shown by means of colored spheres, see FormationGridPoint*/
-        [SerializeField]    protected bool visualizeGrid = true;
-
-        public LayerMask mask;
-
-        [Header("Movement")]
-
-        [SerializeField]    protected MovementType movementType = MovementType.CharacterController;
-        [SerializeField]    protected float maximumVelocity = 4.0F; // Make this a bit higher than as NavMesh speed (=maximum speed)
-        [SerializeField]    protected float maximumAcceleration = 10.0f;
-        [SerializeField]    protected float gravity = 9.8F;
-        [SerializeField]    protected bool  useGravity = true;
-
-        [SerializeField]    protected float randomizeOffset = 0.2F; // If this value >0 then the FormationGridPoint offsets are randomized a little with this max distance
-        [SerializeField]    protected float reRandomizeTimeMin = 2.0F; // Minimum time before reRandomizing the offsets
-        [SerializeField]    protected float reRandomizeTimeMax = 4.0F; // Maximum time before reRandomizing the offsets
-
-        protected float reRandomizeOffsets = 0F;
-        protected float reRandomizeNextTime = 0F;
-
-        /* Smoothen the rotation in Update() Quaternion.Slerp*/
-        public float       smoothRotation = 2.0F; // smooth rotation
-
-        /* When a unit straggles too far behind it grid point use this acceleration multiplier*/
-        public              float       accelerationStraggler = 1.2f;
-
-        [Header("Disband")]
-        [SerializeField]    protected float disbandDuration = 3.0F;
-        [SerializeField]    protected float disbandRadius = 3.0F;
-        protected float disbandTimer = 0.0F;
-        protected bool disbanded = false;
-
-        [Header("Sound")]
-        /* If true then activate the SoundSource on the grid at certain states*/
-        [SerializeField]
-        protected bool hasSound = true;
-
-
-
-        protected bool        positionDirty = false;
-        protected           bool        rotationDirty = false;
-        protected           Vector3     oldPosition;
-        protected           float       oldRotation;
-        
 
         /* The GameObject to which this FormationGrid script is attached to is cached so we can parent the FormationGrid instances to it easily, see SetupGrid*/
-        protected GameObject        formation;
+        protected GameObject formation;
 
         /* The cached FormationAnchor script which we get from the anchor GameObject in the Awake() method */
-        protected FormationAnchor   formationAnchor;
+        protected FormationAnchor formationAnchor;
 
-        protected AudioSource       audioSource;
+        [SerializeField] protected float gravity = 9.8F;
+
+        /* List of FormationGridPoints which make up the formation */
+        [SerializeField] protected List<FormationGridPoint> gridPoints;
+
+        /* Scale factor of the grid used in CalculatePositionsAllGridPoints to enlarged the formation uniformly*/
+        [SerializeField] protected float gridScale = 2.0F;
 
 
-        void Awake()
+        [Header("Grid")]
+        /* Grid types detrmining what the formation looks like */ [SerializeField]
+        protected GridTypes gridType = GridTypes.None;
+
+        [Header("Sound")]
+        /* If true then activate the SoundSource on the grid at certain states*/ [SerializeField]
+        protected bool hasSound = true;
+
+        public LayerMask mask;
+        [SerializeField] protected float maximumAcceleration = 10.0f;
+
+        [SerializeField]
+        protected float maximumVelocity = 4.0F; // Make this a bit higher than as NavMesh speed (=maximum speed)
+
+        public int MaxRowCount = 6;
+
+        protected Vector3 oldPosition;
+        protected float oldRotation;
+
+
+        protected bool positionDirty;
+
+        [SerializeField] protected float randomizeOffset = 0.2F
+            ; // If this value >0 then the FormationGridPoint offsets are randomized a little with this max distance
+
+        protected float reRandomizeNextTime;
+
+        protected float reRandomizeOffsets;
+        [SerializeField] protected float reRandomizeTimeMax = 4.0F; // Maximum time before reRandomizing the offsets
+        [SerializeField] protected float reRandomizeTimeMin = 2.0F; // Minimum time before reRandomizing the offsets
+        protected bool rotationDirty;
+
+        /* Smoothen the rotation in Update() Quaternion.Slerp*/
+        public float smoothRotation = 2.0F; // smooth rotation
+
+        [SerializeField] protected FormationStates state = FormationStates.Form;
+        [SerializeField] protected bool useGravity = true;
+
+        /* If true then the grid is shown by means of colored spheres, see FormationGridPoint*/
+        [SerializeField] protected bool visualizeGrid = true;
+
+
+        private void Awake()
         {
-            Toolbox toolbox = Toolbox.Instance;
+            var toolbox = Toolbox.Instance;
             toolbox.allFormations.Add(this);
 
             if (anchor == null)
@@ -161,11 +149,8 @@ namespace com.t7t.formation
                 Debug.LogError("FormationGrid.Awake(): anchor not assigned");
                 return;
             }
-            else
-            {
-                // Move anchor align with FormationGrid (this) position
-                anchor.transform.position = transform.position;
-            }
+            // Move anchor align with FormationGrid (this) position
+            anchor.transform.position = transform.position;
 
             // Cache the FormationAnchor component from the anchor
             formationAnchor = anchor.GetComponent<FormationAnchor>();
@@ -174,13 +159,10 @@ namespace com.t7t.formation
                 Debug.LogError("FormationGrid.Awake(): FormationAnchor component missing on anchor");
                 return;
             }
-            else
-            {
-                // Assign a reference to this FormationGrid in the FormationAnchor
-                formationAnchor.SetFormation(this);
-            }
+            // Assign a reference to this FormationGrid in the FormationAnchor
+            formationAnchor.SetFormation(this);
 
-            if(hasSound)
+            if (hasSound)
             {
                 audioSource = GetComponent<AudioSource>();
                 if (audioSource == null)
@@ -198,7 +180,7 @@ namespace com.t7t.formation
             formation = transform.gameObject;
 
             // Setup the grid based on the selected property
-            ChangeGridTo(gridType);
+            CalculateGrid(gridType);
 
             // Change the state to the initial form state
             // ChangeState(FormationStates.Form);
@@ -212,7 +194,7 @@ namespace com.t7t.formation
 
         // This method can be used to attach to the FormationAnchor's TargetReached event so we can change the state on parth arrival
         // Currently the Anchor triggers a change to FormationState (to Arrive) when the agent (Navmesh) or seeker (A*) arrives at the target.
-         public void AnchorArrived()
+        public void AnchorArrived()
         {
             ChangeState(FormationStates.Arrive);
         }
@@ -225,10 +207,9 @@ namespace com.t7t.formation
 
 
         // Change the state of the FormationGrid and perform associated actions
-        public void ChangeState (FormationStates newstate)
+        public void ChangeState(FormationStates newstate)
         {
-            
-            switch(newstate)
+            switch (newstate)
             {
                 case FormationStates.Form:
                     Debug.Log("Changing state to Form");
@@ -247,10 +228,8 @@ namespace com.t7t.formation
                     ChangeAnimationStateOnGridObjects(true);
                     state = newstate;
 
-                    if(audioSource)
-                    {
+                    if (audioSource)
                         audioSource.mute = false;
-                    }
                     break;
                 case FormationStates.Move:
                     Debug.Log("Changing state to Move");
@@ -269,9 +248,7 @@ namespace com.t7t.formation
                     state = newstate;
 
                     if (audioSource)
-                    {
                         audioSource.mute = false;
-                    }
                     break;
 
                 case FormationStates.Arrive:
@@ -289,9 +266,7 @@ namespace com.t7t.formation
                     state = newstate;
 
                     if (audioSource)
-                    {
                         audioSource.mute = true;
-                    }
                     break;
                 case FormationStates.Disband:
                     Debug.Log("Changing state to Disband");
@@ -304,9 +279,7 @@ namespace com.t7t.formation
                     break;
                 default:
                     if (audioSource)
-                    {
                         audioSource.mute = true;
-                    }
                     break;
             }
         }
@@ -322,40 +295,39 @@ namespace com.t7t.formation
          *      Calculate the new positions
          */
 
-        public void ChangeGridTo(GridTypes gridtype)
+        public void CalculateGrid(GridTypes gridtype)
         {
             gridType = gridtype;
 
             // Create the list for collecting the already assigned units
-            List<GameObject> units = new List<GameObject>();
+            var units = new List<GameObject>();
 
-            Debug.Log("FormationGrid.ChangeGridTo(): change state to " + gridType);
+            Debug.Log("FormationGrid.CalculateGrid(): change state to " + gridType);
 
 
             if (gridPoints != null)
             {
-
                 if (gridPoints.Count > 0)
                 {
                     // collect units assigned to gridpoint so we can reassign automatically after grid change
 
-                    Debug.Log("FormationGrid.ChangeGridTo(): grid exists so check if it has assigned units");
+                    Debug.Log("FormationGrid.CalculateGrid(): grid exists so check if it has assigned units");
 
-                    for (int i = 0; i < gridPoints.Count; i++)
+                    for (var i = 0; i < gridPoints.Count; i++)
                     {
-                        FormationGridPoint fgp = gridPoints[i];
-                        GameObject go = fgp.GetAssignedUnit();
+                        var fgp = gridPoints[i];
+                        var go = fgp.GetAssignedUnit();
                         if (go)
                         {
                             units.Add(go);
-                            Debug.Log("FormationGrid.ChangeGridTo(): found one unit "+go.name);
+                            Debug.Log("FormationGrid.CalculateGrid(): found one unit " + go.name);
                         }
                     }
 
                     // destroy list items first: cleanup the spheres
-                    for (int i = 0; i< gridPoints.Count; i++)
+                    for (var i = 0; i < gridPoints.Count; i++)
                     {
-                        FormationGridPoint fgp = gridPoints[i];
+                        var fgp = gridPoints[i];
                         fgp.DestroySphere();
                     }
                 }
@@ -366,29 +338,26 @@ namespace com.t7t.formation
             gridPoints = new List<FormationGridPoint>();
             if (gridPoints == null)
             {
-                Debug.LogError("FormationGrid.ChangeGridTo(): gridPoints not initialized");
+                Debug.LogError("FormationGrid.CalculateGrid(): gridPoints not initialized");
                 return;
             }
 
             // Setup the new grid for the new gridtype
-            bool result = SetupGrid(gridtype);
+            var result = SetupGrid(gridtype);
 
             // Now add the units we has assigned to the previous grid
-            if(units.Count>0)
-            {
+            if (units.Count > 0)
                 AssignObjectsToGrid(units);
-
-            }
 
             // Calculate the real positions of the grid based on the offsets in the grid definition
             CalculatePositionsAllGridPoints();
 
-            Debug.Log("FormationGrid.ChangeGridTo(): result SetupGrid()=" + result);
+            Debug.Log("FormationGrid.CalculateGrid(): result SetupGrid()=" + result);
         }
 
 
         // Use this for initialization
-        void Start()
+        private void Start()
         {
             if (anchor == null) return;
 
@@ -399,49 +368,37 @@ namespace com.t7t.formation
         }
 
 
-
-
         // Update is called once per frame
-        void Update()
+        private void Update()
         {
-
             if (anchor == null) return;
 
             if (state == FormationStates.Form)
-            {
-
-                for (int i = 0; i < gridPoints.Count; i++)
+                for (var i = 0; i < gridPoints.Count; i++)
                 {
-                    FormationGridPoint fgp = gridPoints[i];
+                    var fgp = gridPoints[i];
                     if (fgp != null)
-                    {
                         if (fgp.IsUnitAssigned())
                         {
-                            FormationUnitAnimation formationUnitAnimation = fgp.GetFormationUnitAnimation();
+                            var formationUnitAnimation = fgp.GetFormationUnitAnimation();
                             if (formationUnitAnimation)
                             {
-
-                                GameObject go = fgp.GetAssignedUnit();
+                                var go = fgp.GetAssignedUnit();
                                 if (go)
                                 {
-#if T7T_ASTAR
-                                    AIPath aip = go.GetComponent<AIPath>();   
-                                    formationUnitAnimation.velocity = aip.CalculateVelocity(Vector3.zero); // obselete but velocity property is not available.
-#else
-                                    NavMeshAgent nma = go.GetComponent<NavMeshAgent>();
+                                    
+                                    var nma = go.GetComponent<NavMeshAgent>();
                                     formationUnitAnimation.velocity = nma.velocity;
-#endif
+
                                 }
                             }
                         }
-                    }
                 }
-            }
 
             if (state == FormationStates.Move)
             {
-
-                if ((oldPosition - anchorPosition).sqrMagnitude > 0.001f * 0.001f)  // TODO: potentially we can do this by checking if target has been reached
+                if ((oldPosition - anchorPosition).sqrMagnitude > 0.001f * 0.001f
+                ) // TODO: potentially we can do this by checking if target has been reached
                     positionDirty = true;
                 else
                     positionDirty = false;
@@ -451,61 +408,54 @@ namespace com.t7t.formation
                 else
                     rotationDirty = false;
 
-                Quaternion target = anchorRotation;
+                var target = anchorRotation;
                 if (rotationDirty)
-                {
                     transform.rotation = Quaternion.Slerp(transform.rotation, target, Time.deltaTime * smoothRotation);
-                }
 
                 // Rotate the units at grid points to align with anchor rotation:
                 // TODO: can we check when not to run this by means of "fully rotated" units?
                 if (formationAnchor != null)
-                {
-                    // Vector3 velocity = formationAnchor.GetVelocity();
-
-                    for (int i = 0; i < gridPoints.Count; i++)
+                    for (var i = 0; i < gridPoints.Count; i++)
                     {
-                        FormationGridPoint fgp = gridPoints[i];
+                        var fgp = gridPoints[i];
                         if (fgp != null)
-                        {
                             if (fgp.IsUnitAssigned())
                             {
-                                GameObject au = fgp.GetAssignedUnit();
+                                var au = fgp.GetAssignedUnit();
 
-                                au.transform.rotation = Quaternion.Slerp(au.transform.rotation, target, Time.deltaTime * smoothRotation);
+                                au.transform.rotation = Quaternion.Slerp(au.transform.rotation, target,
+                                    Time.deltaTime * smoothRotation);
                             }
-                        }
                     }
-                }
-
 
 
                 if (positionDirty)
                 {
-                    transform.position = anchorPosition;    // Move the Formation to Anchor position. TODO: If dampening needed, do Lerp here.
+                    transform.position =
+                        anchorPosition; // Move the Formation to Anchor position. TODO: If dampening needed, do Lerp here.
 
                     if (randomizeOffset > 0.0F)
-                    {                                       // Randomize the positions slightly if enabled
+                    {
+                        // Randomize the positions slightly if enabled
 
                         reRandomizeOffsets += Time.deltaTime;
 
-                        if (reRandomizeOffsets > reRandomizeNextTime)      // ReRandomize the gridpoints every 3 seconds
+                        if (reRandomizeOffsets > reRandomizeNextTime) // ReRandomize the gridpoints every 3 seconds
                         {
                             reRandomizeOffsets = 0.0F;
-                            reRandomizeNextTime = reRandomizeTimeMin + (reRandomizeTimeMax-reRandomizeTimeMin) * Random.value;
+                            reRandomizeNextTime = reRandomizeTimeMin +
+                                                  (reRandomizeTimeMax - reRandomizeTimeMin) * Random.value;
 
-                            for (int i = 0; i < gridPoints.Count; i++)
+                            for (var i = 0; i < gridPoints.Count; i++)
                             {
-                                FormationGridPoint fgp = gridPoints[i];
+                                var fgp = gridPoints[i];
                                 fgp.RandomizePosition();
                             }
                         }
                     }
 
-                    CalculatePositionsAllGridPoints();      // Calculate all Grid Points relative to the Anchor which has moved by means of A*Pathfinfing.
-
+                    CalculatePositionsAllGridPoints(); // Calculate all Grid Points relative to the Anchor which has moved by means of A*Pathfinfing.
                 }
-
 
 
                 // Now move the units (assigned to grid positions) towards their grid position:
@@ -513,70 +463,36 @@ namespace com.t7t.formation
                 // TODO: Add a check here to stop if all units have arrived.
 
                 if (formationAnchor != null)
-                {
-                    float endReachedDistance = formationAnchor.endReachedDistance;
-                    Vector3 vlcity = formationAnchor.GetVelocity();
-
-                    //DebugPanel.Log("Anchor velocity", "Anchor", vlcity.magnitude);
-
-
-                    for (int i = 0; i < gridPoints.Count; i++)
+                    for (var i = 0; i < gridPoints.Count; i++)
                     {
-                        FormationGridPoint fgp = gridPoints[i];
+                        var fgp = gridPoints[i];
                         if (fgp != null)
-                        {
                             if (fgp.IsUnitAssigned())
                             {
-
-                                switch (movementType)
-                                {
-                                    case MovementType.RigidBody:
-                                        // Do nothing since in case of rigidbody we use FixedUpdate() instead of Update()
-                                        //MoveUnitsRigidBodyMode(i, fgp, vlcity, endReachedDistance);
-                                        break;
-                                    case MovementType.CharacterController:
-                                        MoveUnitsCharacterControllerMode(i,fgp,vlcity,endReachedDistance);
-                                        break;
-                                    default:
-                                        Debug.LogError("FormationGrid.Update(): Unknown movementType");
-                                        break;
-                                }
-
-
-                                FormationUnitAnimation formationUnitAnimation = fgp.GetFormationUnitAnimation();
+                                var formationUnitAnimation = fgp.GetFormationUnitAnimation();
                                 if (formationUnitAnimation)
-                                {
                                     formationUnitAnimation.velocity = fgp.GetAssignedVelocity();
-                                    //DebugPanel.Log("FUA.velocity", "Unit Animation", fgp.GetAssignedVelocity());
-                                }
-
                             }
-                        }
 
                         oldPosition = anchorPosition;
                         oldRotation = transform.rotation.eulerAngles.y;
                     }
-
-                }
             }
 
             if (state == FormationStates.Disband)
             {
-
-                if(disbandTimer == 0.0f)
+                if (disbandTimer == 0.0f)
                 {
                     // set the directions for each assigned unit
-                    for (int i = 0; i < gridPoints.Count; i++)
+                    for (var i = 0; i < gridPoints.Count; i++)
                     {
-                        FormationGridPoint fgp = gridPoints[i];
+                        var fgp = gridPoints[i];
                         if (fgp != null)
-                        {
                             if (fgp.IsUnitAssigned())
                             {
                                 fgp.SetDisbandDesitination(disbandRadius, mask);
                                 fgp.SetPositionToDisband(mask);
                             }
-                        }
                     }
                     ChangeMoveStateOnGridObjects(true);
                     disbanded = false;
@@ -601,97 +517,38 @@ namespace com.t7t.formation
                     }
                 }
             }
-
         }
-
-        // If we use Rigidbody we need to assign the velocities in FixedUpdate()
-        void FixedUpdate()
-        {
-            if (anchor == null) return;
-
-            if (movementType == MovementType.CharacterController) return; // Oops for some reason we ended up here. Should never happen.
-
-            if (state == FormationStates.Move)
-            {
-
-                if (formationAnchor != null)
-                {
-                    float endReachedDistance = formationAnchor.endReachedDistance;
-                    Vector3 vlcity = formationAnchor.GetVelocity();
-
-                    //DebugPanel.Log("Anchor velocity", "Anchor", vlcity.magnitude);
-
-
-                    for (int i = 0; i < gridPoints.Count; i++)
-                    {
-                        FormationGridPoint fgp = gridPoints[i];
-                        if (fgp != null)
-                        {
-                            if (fgp.IsUnitAssigned())
-                            {
-
-                                switch (movementType)
-                                {
-                                    case MovementType.RigidBody:
-                                        MoveUnitsRigidBodyMode(i, fgp, vlcity, endReachedDistance);
-                                        break;
-                                    case MovementType.CharacterController:
-                                        //MoveUnitsCharacterControllerMode(i, fgp, vlcity, endReachedDistance);
-                                        break;
-                                    default:
-                                        Debug.LogError("FormationGrid.Update(): Unknown movementType");
-                                        break;
-                                }
-
-
-                                FormationUnitAnimation formationUnitAnimation = fgp.GetFormationUnitAnimation();
-                                if (formationUnitAnimation)
-                                {
-                                    formationUnitAnimation.velocity = fgp.GetAssignedVelocity();
-                                    //DebugPanel.Log("FUA.velocity", "Unit Animation", fgp.GetAssignedVelocity());
-                                }
-
-                            }
-                        }
-
-                        oldPosition = anchorPosition;
-                        oldRotation = transform.rotation.eulerAngles.y;
-                    }
-
-                }
-
-            }
-
-        } 
 
         // In this function we actually move each assigned unit of a grid point towards that moving (in most cases) grid point
         // We use the Move function of the CharacterController and the motion is calculated based on the distance from the unit to the grid point.
-        public void MoveUnitsCharacterControllerMode(int gridPointIndex, FormationGridPoint fgp, Vector3 vlcity, float endReachedDistance)
+        public void MoveUnitsCharacterControllerMode(int gridPointIndex, FormationGridPoint fgp, Vector3 vlcity,
+            float endReachedDistance)
         {
-            CharacterController controller = fgp.GetCharacterController();
-            if(!controller)
-            {
-                Debug.LogError("FormationGrid.MoveUnitsCharacterControllerMode(): Character Controller missing on assigned unit.");
-            }
+            var controller = fgp.GetCharacterController();
+            if (!controller)
+                Debug.LogError(
+                    "FormationGrid.MoveUnitsCharacterControllerMode(): Character Controller missing on assigned unit.");
 
-            float distanceToGridPoint = fgp.CalculateDistanceUnitToGridPoint();
+            var distanceToGridPoint = fgp.CalculateDistanceUnitToGridPoint();
 
             //if (gridPointIndex == 0) DebugPanel.Log("GridPoint [" + gridPointIndex + "] unittogrid", "Grid", distanceToGridPoint);
 
             // default acceleration multiplier
-            float acceleration = 1.0F;
+            var acceleration = 1.0F;
             if (distanceToGridPoint > endReachedDistance * 5)
             {
                 // takeover
                 acceleration = accelerationStraggler;
             }
-            else if ((distanceToGridPoint > endReachedDistance) && ((distanceToGridPoint < endReachedDistance * 5)))
+            else if (distanceToGridPoint > endReachedDistance && distanceToGridPoint < endReachedDistance * 5)
             {
                 // slowdown
-                float slope = 1 / (4 * endReachedDistance);         //      1 / ((5-1) * endReachedDistance) 
-                float intercept = -1 * (slope * endReachedDistance);    //  
+                var slope = 1 / (4 * endReachedDistance); //      1 / ((5-1) * endReachedDistance) 
+                var intercept = -1 * (slope * endReachedDistance); //  
 
-                acceleration = slope * distanceToGridPoint + intercept; //      a = 0 at endReachedDistance and a = 1 at 5*endReachedDistance 
+                acceleration =
+                    slope * distanceToGridPoint +
+                    intercept; //      a = 0 at endReachedDistance and a = 1 at 5*endReachedDistance 
 
                 //acceleration = distanceToGridPoint / 0.5F;
             }
@@ -702,18 +559,16 @@ namespace com.t7t.formation
 
             //if (gridPointIndex == 0) DebugPanel.Log("GridPoint [" + gridPointIndex + "] acceleration", "Grid", acceleration);
 
-            Vector3 direction = fgp.GetPosition() - fgp.GetAssignedUnit().transform.position;
-            Vector3 fgp_velocity = direction * acceleration;
+            var direction = fgp.GetPosition() - fgp.GetAssignedUnit().transform.position;
+            var fgp_velocity = direction * acceleration;
 
 
             if (useGravity)
             {
                 // Use gravity and calculate vertical velocity down
-                float vSpeed = fgp.GetUnitVerticalSpeed();
+                var vSpeed = fgp.GetUnitVerticalSpeed();
                 if (controller.isGrounded)
-                {
                     vSpeed = 0;
-                }
                 vSpeed -= gravity * Time.deltaTime;
                 fgp.SetUnitVerticalSpeed(vSpeed);
                 fgp_velocity.y = vSpeed;
@@ -727,17 +582,15 @@ namespace com.t7t.formation
 
         // In this function we actually move each assigned unit of a grid point towards that moving (in most cases) grid point
         // We use the Rigidbody velocity and the velocity is calculated based on the distance from the unit to the grid point.
-        public void MoveUnitsRigidBodyMode(int gridPointIndex, FormationGridPoint fgp, Vector3 vlcity, float endReachedDistance)
+        public void MoveUnitsRigidBodyMode(int gridPointIndex, FormationGridPoint fgp, Vector3 vlcity,
+            float endReachedDistance)
         {
-
-            Rigidbody rigidbody = fgp.GetRigidbody();
+            var rigidbody = fgp.GetRigidbody();
             if (!rigidbody)
-            {
                 Debug.LogError("FormationGrid.MoveUnitsRigidBodyMode(): Rigidbody missing on assigned unit.");
-            }
 
 
-            Vector3 acceleration = fgp.GetPosition() - fgp.GetAssignedUnit().transform.position;
+            var acceleration = fgp.GetPosition() - fgp.GetAssignedUnit().transform.position;
             acceleration.y = 0;
             acceleration.Normalize();
             acceleration *= maximumAcceleration;
@@ -747,20 +600,24 @@ namespace com.t7t.formation
             rigidbody.velocity += acceleration * Time.deltaTime;
 
             if (rigidbody.velocity.magnitude > maximumVelocity)
-            {
                 rigidbody.velocity = rigidbody.velocity.normalized * maximumVelocity;
-            }
 
             //DebugPanel.Log("Rgb velocity "+gridPointIndex, "Rigidbody", rigidbody.velocity.magnitude);
 
             fgp.SetAssignedVelocity(rigidbody.velocity);
         }
 
-
+        public void SetAnchorTransform(Transform transform)
+        {
+            anchor.transform.position = transform.position;
+            anchor.transform.rotation = transform.rotation;
+            
+        }
         public void SetAnchor(GameObject nchr)
         {
             anchor = nchr;
             anchor.transform.position = transform.position;
+            
 
             CalculatePositionsAllGridPoints();
 
@@ -771,11 +628,8 @@ namespace com.t7t.formation
         public bool LoadCustomGrid(string filename)
         {
             if (gridType == GridTypes.Custom)
-            {
-                // load grid from JSON
                 return true;
-            }
-            else return false;
+            return false;
         }
 
         // Setup the grid based on static offsets contained in the function.
@@ -785,19 +639,18 @@ namespace com.t7t.formation
             gridPoints.Clear();
 
             Vector2[] grid;
-            switch(gridtype)
+            switch (gridtype)
             {
-                case GridTypes.Dynamic:
+                case GridTypes.DynamicLine:
 
-                    List<Vector2> customerGrid = new List<Vector2>();
-                    var selectedUnits = GameUnitService.GetSelectedUnits(); 
+                    var customerGrid = new List<Vector2>();
+                    var selectedUnits = GameUnitService.GetSelectedUnits();
                     var rows = selectedUnits.Count / MaxRowCount;
                     var start_y = 0f;
                     var start_x = Mathf.Round(MaxRowCount / 2) * -1;
-                    for (int r = 0; r < rows; r++)
+                    for (var r = 0; r < rows; r++)
                     {
-
-                        for (int j = 0; j < MaxRowCount; j++)
+                        for (var j = 0; j < MaxRowCount; j++)
                         {
                             customerGrid.Add(new Vector2(start_x, start_y));
                             start_x += 1f;
@@ -805,9 +658,9 @@ namespace com.t7t.formation
                         start_y += -1f;
                     }
 
-                    var remainingUnits = selectedUnits.Count - (rows * MaxRowCount);
+                    var remainingUnits = selectedUnits.Count - rows * MaxRowCount;
                     start_x = Mathf.Round(remainingUnits / 2) * -1;
-                    for (int j = 0; j < remainingUnits; j++)
+                    for (var j = 0; j < remainingUnits; j++)
                     {
                         customerGrid.Add(new Vector2(start_x, start_y));
                         start_x += 1f;
@@ -816,9 +669,9 @@ namespace com.t7t.formation
                     break;
                 case GridTypes.Box9:
                     grid = new Vector2[9];
-                    grid[0] = new Vector2(1.0f,1.5f);
-                    grid[1] = new Vector2(0.0f,1.5f);
-                    grid[2] = new Vector2(-1.0f,1.5f);
+                    grid[0] = new Vector2(1.0f, 1.5f);
+                    grid[1] = new Vector2(0.0f, 1.5f);
+                    grid[2] = new Vector2(-1.0f, 1.5f);
 
                     grid[3] = new Vector2(1.0f, 0.5f);
                     grid[4] = new Vector2(0.0f, 0.5f);
@@ -864,18 +717,15 @@ namespace com.t7t.formation
                     grid[0] = new Vector2(0.0f, 0.0f);
                     Debug.LogError("FormationGrid.SetupGrid(): no grid type selected");
                     break;
-
             }
 
-            if(!formation)
-            {
+            if (!formation)
                 formation = transform.gameObject;
-            }
 
 
-            for (int i = 0; i < grid.GetLength(0); i++)
+            for (var i = 0; i < grid.GetLength(0); i++)
             {
-                FormationGridPoint fgp = new FormationGridPoint(i, formation, randomizeOffset);              // DKE: fixed missing id number.
+                var fgp = new FormationGridPoint(i, formation, randomizeOffset); // DKE: fixed missing id number.
                 fgp.offsetX = grid[i].x;
                 fgp.offsetZ = grid[i].y;
                 gridPoints.Add(fgp);
@@ -884,20 +734,17 @@ namespace com.t7t.formation
             return true;
         }
 
-        public int MaxRowCount = 6;
-
         // Calculate grid positions in the real world taking the grid/anchor position and rotation into account
         public void CalculatePositionsAllGridPoints()
         {
-
             if (gridPoints == null) return;
 
-            float   rotationY = transform.rotation.eulerAngles.y;
-            Vector3 position = transform.position;
+            var rotationY = transform.rotation.eulerAngles.y;
+            var position = transform.position;
 
-            for(int i = 0; i < gridPoints.Count; i++)
+            for (var i = 0; i < gridPoints.Count; i++)
             {
-                FormationGridPoint fgp = gridPoints[i];
+                var fgp = gridPoints[i];
 
                 fgp.SetPosition(position, rotationY, gridScale, mask);
 
@@ -910,10 +757,10 @@ namespace com.t7t.formation
         // True = start moving
         public void ChangeMoveStateOnGridObjects(bool state)
         {
-            for (int i = 0; i < gridPoints.Count; i++)
+            for (var i = 0; i < gridPoints.Count; i++)
             {
-                FormationGridPoint fgp = gridPoints[i];
-                GameObject go = fgp.GetAssignedUnit();
+                var fgp = gridPoints[i];
+                var go = fgp.GetAssignedUnit();
 
                 if (go)
                 {
@@ -930,9 +777,8 @@ namespace com.t7t.formation
                         Debug.LogError("FormationGrid.EnableMoveOnGridObjects(): no assigned unit found for gridpoint.");
                     }
 #else
-                    NavMeshAgent nma = go.GetComponent<NavMeshAgent>();
+                    var nma = go.GetComponent<NavMeshAgent>();
                     if (nma)
-                    {
                         if (state)
                         {
                             nma.destination = fgp.GetPosition();
@@ -941,15 +787,13 @@ namespace com.t7t.formation
                         else
                         {
                             nma.Stop();
-                            Rigidbody rigidbody = fgp.GetRigidbody();
+                            var rigidbody = fgp.GetRigidbody();
                             if (rigidbody)
                                 rigidbody.velocity = Vector3.zero;
                         }
-                    }
                     else
-                    {
-                        Debug.LogError("FormationGrid.EnableMoveOnGridObjects(): no nav mesh agent found for assigned unit.");
-                    }
+                        Debug.LogError(
+                            "FormationGrid.EnableMoveOnGridObjects(): no nav mesh agent found for assigned unit.");
 #endif
                 }
             }
@@ -961,87 +805,80 @@ namespace com.t7t.formation
         // True = go to movement state
         public void ChangeAnimationStateOnGridObjects(bool state)
         {
-            for (int i = 0; i < gridPoints.Count; i++)
+            for (var i = 0; i < gridPoints.Count; i++)
             {
-                FormationGridPoint fgp = gridPoints[i];
-                GameObject go = fgp.GetAssignedUnit();
+                var fgp = gridPoints[i];
+                var go = fgp.GetAssignedUnit();
 
                 if (go)
                 {
-                    FormationUnitAnimation formationUnitAnimation = fgp.GetFormationUnitAnimation();
+                    var formationUnitAnimation = fgp.GetFormationUnitAnimation();
                     if (formationUnitAnimation)
-                    {
                         if (state)
-                        {
                             formationUnitAnimation.StartAnimations();
-                        }
                         else
-                        {
                             formationUnitAnimation.StopAnimations();
-                        }
-                    }
                 }
             }
-        }
-
-
-
-        public bool AddObjectsToGrid(List<GameObject> list)
-        {
-            // TODO
-            return true;
         }
 
 
         // Assign the objects in a list to the FormationGridPoint(s) in the gridPoints list
         public bool AssignObjectsToGrid(List<GameObject> list)
         {
-            bool result = true;
-
-//            if(list.Count>gridPoints.Count)
-//            {
-//                Debug.LogWarning("FormationGrid.AssignObjectsToGrid(): too many objects for this grid.");
-//                result = false;
-//            }
-            ChangeGridTo(GridTypes.Dynamic);
-            for (int i = 0; i < list.Count; i++)
-            {
+            var result = true;
+            gridPoints.Clear();
+            transform.LookAt(list.First().transform);
+            CalculateGrid(GridTypes.DynamicLine);
+            for (var i = 0; i < list.Count; i++)
                 if (i < gridPoints.Count)
                 {
-                    GameObject go = list[i];
-
-                    // Now check if the required components are available so we can move the objects
-                    if(movementType == MovementType.CharacterController)
-                    {
-                        CharacterController cc = go.GetComponent<CharacterController>();
-                        if (!cc) Debug.LogError("FormationGrid.AssignObjectsToGrid(): GameObject to be assigned does not have the required CharacterController for this movement type.");
-                    }
-                    else if(movementType == MovementType.RigidBody)
-                    {
-                        Rigidbody rb = go.GetComponent<Rigidbody>();
-                        if (!rb) Debug.LogError("FormationGrid.AssignObjectsToGrid(): GameObject to be assigned does not have the required RigidBody for this movement type.");
-                    }
-                    NavMeshAgent nma = go.GetComponent<NavMeshAgent>();
+                    var go = list[i];
+                    var gu = go.GetComponent<GameUnitController>();
+                    var nma = go.GetComponent<NavMeshAgent>();
                     if (nma)
                     {
-                        FormationGridPoint fgp = gridPoints[i];
+                        var fgp = gridPoints[i];
                         fgp.AssignUnit(go);
 
-                        nma.destination = fgp.GetPosition();
+                        gu.MovePosition(fgp.GetPosition());
 
-                        Debug.Log("FormationGrid.AssignObjectsToGrid(): Assigned new target to object " + go.transform.name);
+                        Debug.Log("FormationGrid.AssignObjectsToGrid(): Assigned new target to object " +
+                                  go.transform.name);
                     }
                     else
                     {
-                        Debug.LogWarning("FormationGrid.AssignObjectsToGrid(): Assigned Object [" + go.transform.name + "] has no Navmesh component.");
+                        Debug.LogWarning("FormationGrid.AssignObjectsToGrid(): Assigned Object [" + go.transform.name +
+                                         "] has no Navmesh component.");
                         result = false;
                     }
                 }
-            }
 
             return result;
         }
 
-    }
+        /* A series of getters which return anchor properties */
 
+        #region anchorgetters
+
+        [SerializeField]
+        protected Transform anchorTransform
+        {
+            get { return anchor.transform; }
+        }
+
+        [SerializeField]
+        protected Vector3 anchorPosition
+        {
+            get { return anchor.transform.position; }
+        }
+
+        [SerializeField]
+        protected Quaternion anchorRotation
+        {
+            get { return anchor.transform.rotation; }
+        }
+
+        #endregion
+    }
 }

@@ -85,7 +85,7 @@ namespace com.t7t.formation
 
                             formationAndStates.Add(fas);
 
-                            fg.ChangeGridTo(newGridType);
+                            fg.CalculateGrid(newGridType);
                             fg.ChangeState(FormationStates.Form);
 
                             // start coroutine to move in waitformove seconds
@@ -111,7 +111,7 @@ namespace com.t7t.formation
                         {
                             //Debug.Log("OUT OF RANGE");
 
-                            fg.ChangeGridTo(fas.oldGridType);
+                            fg.CalculateGrid(fas.oldGridType);
                             fg.ChangeState(FormationStates.Form);
 
                             // start coroutine to move in waitformove seconds

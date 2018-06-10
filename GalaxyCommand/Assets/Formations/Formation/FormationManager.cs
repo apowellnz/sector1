@@ -31,6 +31,11 @@ namespace com.t7t.formation
         {
 
         }
+
+        public static FormationGrid GetFormationGridInstance()
+        {
+            return GameObject.FindObjectOfType<FormationGrid>();
+        }
     }
 
 }

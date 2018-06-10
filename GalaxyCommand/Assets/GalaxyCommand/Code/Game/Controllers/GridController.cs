@@ -1,4 +1,6 @@
-﻿using Assets.GalaxyCommand.Code.Game.Services;
+﻿using System.Linq;
+using Assets.GalaxyCommand.Code.Game.Services;
+using com.t7t.formation;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -25,8 +27,11 @@ public class GridController
             }
             else
             {
-                foreach (var unit in GameUnitService.GetSelectedUnits())
-                    unit.MovePosition(target.transform);
+                var selectedUnits = GameUnitService.GetSelectedUnits().Select(g => g.gameObject).ToList();
+                FormationGrid formationGrid = FormationManager.GetFormationGridInstance();
+                formationGrid.SetAnchorTransform(target.transform);
+                formationGrid.AssignObjectsToGrid(selectedUnits); 
+                formationGrid.ChangeState(FormationStates.Move);
             }
         }
     }

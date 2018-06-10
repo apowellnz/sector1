@@ -104,8 +104,8 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
 
         private void UpdateCheckWaypoints()
         {
-            if (WayPoints.Any() && _navMesh.remainingDistance <= 0.5f)
-                MovePosition(WayPoints.Dequeue(), false);
+//            if (WayPoints.Any() && _navMesh.remainingDistance <= 0.5f)
+                //MovePosition(WayPoints.Dequeue(), false);
         }
 
     
@@ -163,11 +163,10 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
 
 
 
-        public void MovePosition(Transform targetTransform,bool clearWaypoints = true)
+        public void MovePosition(Vector3 position,bool clearWaypoints = true)
         {
             
-            _navMesh.SetDestination(targetTransform.position);
-            Destroy(targetTransform.gameObject,3);
+            _navMesh.SetDestination(position);
             if (clearWaypoints)
                 WayPoints.Clear();
         }

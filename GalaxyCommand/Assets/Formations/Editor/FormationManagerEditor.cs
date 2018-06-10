@@ -194,7 +194,7 @@ namespace com.t7t.formation
             sphere2.transform.localPosition = new Vector3(0f, 0f, 0f);
             sphere2.transform.name = "empty";
 
-            //fg.ChangeGridTo(GridTypes.Wedge9);
+            //fg.CalculateGrid(GridTypes.Wedge9);
             fg.SetAnchor(anchor);
 
         }
