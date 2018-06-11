@@ -93,7 +93,7 @@ namespace Assets.GalaxyCommand.Code.Game.Controllers
             _selectionImage.SetActive(IsSelected);
             if (IsSelected)
             {
-                var rect = GameUnitService.GetBoundsOfUnity(this);
+                var rect = BoundsService.GetBoundsOfObject(this);
 
                 _rectTransform.position = new Vector2(rect.xMin + rect.width / 2, rect.yMin + rect.height / 2);
                 _rectTransform.sizeDelta = new Vector2(rect.width, rect.height);
