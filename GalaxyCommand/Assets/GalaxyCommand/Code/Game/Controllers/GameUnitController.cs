@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Assets.GalaxyCommand.Code.Common;
+using Assets.GalaxyCommand.Code.Enums;
 using Assets.GalaxyCommand.Code.Game.Services;
 using UnityEngine;
 using UnityEngine.AI;

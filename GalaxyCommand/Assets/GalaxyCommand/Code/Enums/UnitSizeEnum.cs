@@ -1,4 +1,4 @@
-﻿namespace Assets.GalaxyCommand.Code.Game.Controllers
+﻿namespace Assets.GalaxyCommand.Code.Enums
 {
     public enum UnitSizeEnum
     {
