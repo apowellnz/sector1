@@ -19,7 +19,7 @@ public class GridController
         {
             var target = Instantiate(TargetPositionObject);
             target.transform.position = eventData.pointerCurrentRaycast.worldPosition;
-            if (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt))
+            if (InputService.IsPressintAlt())
             {
                 var selectedUnits = GameUnitService.GetSelectedUnits();
                 Vector3 lastWaypoint = selectedUnits.First().WayPoints.Any()

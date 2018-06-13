@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace Assets.GalaxyCommand.Code.AI
 {
@@ -36,8 +36,9 @@ namespace Assets.GalaxyCommand.Code.AI
             {
                 //Check other states to see if we should change based off their own check
                 foreach (var state in this)
-                    if (state.CheckState(Owner))
-                        ChangeState(state);
+                    if (state.DecideThisState(Owner))
+                      if(CurrentState == null || CurrentState.HasFinished || state.Priority > CurrentState.Priority)
+                          ChangeState(state);
             }
             
         }

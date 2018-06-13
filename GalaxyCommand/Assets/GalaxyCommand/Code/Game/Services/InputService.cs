@@ -6,7 +6,12 @@ namespace Assets.GalaxyCommand.Code.Game.Services
     {
         public static bool IsPressingCtrl()
         {
-            return Input.GetKey(KeyCode.RightControl) || Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.A);
+            return Input.GetKey(KeyCode.RightControl) || Input.GetKey(KeyCode.LeftControl) ;
+        }
+
+        public static bool IsPressintAlt()
+        {
+            return Input.GetKey(KeyCode.RightAlt) || Input.GetKey(KeyCode.LeftAlt);
         }
     }
 }
