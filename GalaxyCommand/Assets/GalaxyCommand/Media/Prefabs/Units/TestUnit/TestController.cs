@@ -1,8 +1,8 @@
-﻿using Assets.GalaxyCommand.Code.Game.Controllers;
+using Assets.GalaxyCommand.Code.Game.Units;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class TestController : GameUnitController
+public class TestController : BaseUnitController
 {
     public Material Normal;
     public Material Selected;

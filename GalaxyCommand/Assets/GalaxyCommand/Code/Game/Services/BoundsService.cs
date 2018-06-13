@@ -1,15 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Assets.GalaxyCommand.Code.Game.Controllers;
+using Assets.GalaxyCommand.Code.Game.Units;
 using UnityEngine;
 
 namespace Assets.GalaxyCommand.Code.Game.Services
 {
     public class BoundsService
     {
-        public static Rect GetBoundsOfObject(GameUnitController unitController)
+        public static Rect GetBoundsOfObject(BaseUnitController unitController)
         {
             var screenSpaceCorners = new Vector3[8];
             var theCamera = GameObject.FindObjectOfType<Camera>();

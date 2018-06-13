@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
-using Assets.GalaxyCommand.Code.Game.Controllers;
+using Assets.GalaxyCommand.Code.Game.Units;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -17,15 +17,15 @@ namespace Assets.GalaxyCommand.Code.Game.Services
             _waypointObject = waypointObject;
         }
 
-        public Dictionary<Vector3, GameUnitController> GetFomation(
+        public Dictionary<Vector3, BaseUnitController> GetFomation(
             Transform targetLocation,
-            HashSet<GameUnitController> units,
+            HashSet<BaseUnitController> units,
             Vector3 StartLocation,
             FormationType formationType)
         {
             var formationAnchor = new GameObject("Formation Anchor");
-            var customerGrid = new Dictionary<Vector3, GameUnitController>();
-            var unitQueue = new Queue<GameUnitController>(units);
+            var customerGrid = new Dictionary<Vector3, BaseUnitController>();
+            var unitQueue = new Queue<BaseUnitController>(units);
             formationAnchor.transform.position = targetLocation.position;
             formationAnchor.transform.LookAt(StartLocation);
 
@@ -56,9 +56,9 @@ namespace Assets.GalaxyCommand.Code.Game.Services
             return customerGrid;
         }
 
-        private static float AddWaypoint(Queue<GameUnitController> _unitQueue, float startX, GameObject formationAnchor,
+        private static float AddWaypoint(Queue<BaseUnitController> _unitQueue, float startX, GameObject formationAnchor,
             float startY,
-            Dictionary<Vector3, GameUnitController> customerGrid)
+            Dictionary<Vector3, BaseUnitController> customerGrid)
         {
             if (_unitQueue.Any())
             {

@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using Assets.GalaxyCommand.Code.Game.Controllers;
 using Assets.GalaxyCommand.Code.Game.Services;
+using Assets.GalaxyCommand.Code.Game.Units;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -30,7 +30,7 @@ namespace Assets.GalaxyCommand.Code.Game.UI
         {
             if (Input.GetMouseButton(0))
             {
-                GameUnitController.DeselectAll(new BaseEventData(EventSystem.current));
+                BaseUnitController.DeselectAll(new BaseEventData(EventSystem.current));
                 SelectionBoxImage.gameObject.SetActive(true);
                 _startPosition = eventData.position;
                 _selectionRect = new Rect();
@@ -70,7 +70,7 @@ namespace Assets.GalaxyCommand.Code.Game.UI
             SelectionBoxImage.gameObject.SetActive(false);
             foreach (var unit in GameUnitService.GetAllUnits())
                 if (_selectionRect.Contains(_camera.WorldToScreenPoint(unit.transform.position)))
-                    unit.GetComponent<GameUnitController>().OnSelect(eventData);
+                    unit.GetComponent<BaseUnitController>().OnSelect(eventData);
         }
 
         /// <summary>

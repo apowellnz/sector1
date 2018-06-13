@@ -1,14 +1,14 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Assets.GalaxyCommand.Code.AI;
-using Assets.GalaxyCommand.Code.Game.Controllers;
+using Assets.GalaxyCommand.Code.Game.Units;
 using UnityEngine;
 
 namespace Assets.GalaxyCommand.Media.Prefabs.Units.TestUnit
 {
-    public class GuardingState<TUnit> : State<TUnit> where TUnit: GameUnitController
+    public class GuardingState<TUnit> : State<TUnit> where TUnit: BaseUnitController
     {
         public override bool CheckState(TUnit unit)
         {
