@@ -40,7 +40,7 @@ namespace Assets.GalaxyCommand.Code.Game.Grid
             var formation = _formationService.GetFomation(target.transform, GameUnitService.GetSelectedUnits(), GameUnitService.GetSelectedUnits().First().transform.position, FormationType.Lines);
             foreach (var waypoints in formation)
             {
-              waypoints.Value.CmdMovePosition(waypoints.Key); 
+              waypoints.Value.CmdMoveAndReset(waypoints.Key); 
             }
           }
         }

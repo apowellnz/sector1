@@ -27,6 +27,7 @@ namespace Assets.GalaxyCommand.Code.Game.Units
     public GameObject SelectionBox;
 
     public UnitSizeEnum UnitSize;
+    private NetworkTransform _networkTransform;
 
     protected static HashSet<BaseUnitController> AllUnits
     {
@@ -81,6 +82,7 @@ namespace Assets.GalaxyCommand.Code.Game.Units
       UpdateAvoidencePriority();
     }
 
+
     private void UpdateAvoidencePriority()
     {
       _navMesh.avoidancePriority = (int) _navMesh.remainingDistance + (int) UnitSize;
@@ -104,7 +106,7 @@ namespace Assets.GalaxyCommand.Code.Game.Units
     private void UpdateCheckWaypoints()
     {
       if (WayPoints.Any() && _navMesh.remainingDistance <= 0.5f)
-        CmdMovePositionDontClearWaypoints(WayPoints.Dequeue());
+        CmdMove(WayPoints.Dequeue());
     }
 
 
@@ -153,18 +155,19 @@ namespace Assets.GalaxyCommand.Code.Game.Units
       _rectTransform = _selectionImage.GetComponent<RectTransform>();
       _selectionImage.SetActive(false);
       tag = TagCollection.GameUnitTag;
+      _networkTransform = GetComponent<NetworkTransform>();
     }
 
 
     [Command]
-    public void CmdMovePosition(Vector3 position)
+    public void CmdMoveAndReset(Vector3 position)
     {
       _navMesh.SetDestination(position);
       WayPoints.Clear();
     }
 
     [Command]
-    public void CmdMovePositionDontClearWaypoints(Vector3 position)
+    public void CmdMove(Vector3 position)
     {
       _navMesh.SetDestination(position);
     }
