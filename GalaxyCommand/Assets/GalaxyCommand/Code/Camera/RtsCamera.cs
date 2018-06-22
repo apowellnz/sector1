@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 namespace RTS_Cam
@@ -281,6 +281,7 @@ namespace RTS_Cam
 
         public void SetPosition(Vector3 pos)
         {
+          pos.y = m_Transform.position.y;
             m_Transform.position = pos;
             _scrollWheel = 0;
         }

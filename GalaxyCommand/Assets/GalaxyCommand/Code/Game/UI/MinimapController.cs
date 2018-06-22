@@ -1,4 +1,5 @@
 using System;
+using RTS_Cam;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -6,31 +7,42 @@ using UnityEngine.UI;
 public class MinimapController
   : MonoBehaviour,
     IPointerClickHandler
+  
 {
   public Camera MiniMapCamera;
 
   public void OnPointerClick(PointerEventData eventData)
   {
-    var width = GetComponent<RawImage>().rectTransform.rect.width;
-    var height = GetComponent<RawImage>().rectTransform.rect.height;
-
-    var point = new Vector2(MiniMapCamera.pixelWidth / width * eventData.position.x,
-      MiniMapCamera.pixelHeight / height * eventData.position.y);
+  
+    var rect = GetComponent<RawImage>().rectTransform.rect;
+    var point = new Vector2(MiniMapCamera.pixelWidth / rect.width * eventData.position.x,
+      MiniMapCamera.pixelHeight / rect.height * eventData.position.y);
     RaycastHit portalHit;
     if (Physics.Raycast(MiniMapCamera.ScreenPointToRay(point), out portalHit))
     {
-      var ph = portalHit.collider.gameObject.GetComponent<IPointerClickHandler>();
-      if (ph != null)
-        ExecuteEvents.Execute<IPointerClickHandler>(portalHit.collider.gameObject,
-          new PointerEventData(EventSystem.current)
-          {
-            button = eventData.button,
-            pointerCurrentRaycast = new RaycastResult
+
+      if (eventData.clickCount == 2)
+      {
+        var cameraControl = GameObject.FindObjectOfType<RtsCamera>();
+        cameraControl.SetPosition(portalHit.point);
+      }
+      else
+      {
+        var ph = portalHit.collider.gameObject.GetComponent<IPointerClickHandler>();
+        if (ph != null)
+          ExecuteEvents.Execute<IPointerClickHandler>(portalHit.collider.gameObject,
+            new PointerEventData(EventSystem.current)
             {
-              worldPosition = portalHit.point
-            }
-          },
-          (x, y) => { x.OnPointerClick((PointerEventData) y); });
+              button = eventData.button,
+              pointerCurrentRaycast = new RaycastResult
+              {
+                worldPosition = portalHit.point
+              }
+            },
+            (x, y) => { x.OnPointerClick((PointerEventData)y); });
+      }
+     
+
     }
   }
 
