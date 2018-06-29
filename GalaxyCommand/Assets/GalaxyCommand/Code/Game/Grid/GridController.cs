@@ -21,7 +21,7 @@ namespace Assets.GalaxyCommand.Code.Game.Grid
       {
         var target = Instantiate(TargetPositionObject);
         target.transform.position = eventData.pointerCurrentRaycast.worldPosition;
-        if (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt))
+        if (InputService.IsPressingAlt())
         {
           var selectedUnits = GameUnitService.GetSelectedUnits();
           Vector3 lastWaypoint = selectedUnits.First().WayPoints.Any()
@@ -30,7 +30,7 @@ namespace Assets.GalaxyCommand.Code.Game.Grid
           var formation = _formationService.GetFomation(target.transform, selectedUnits, lastWaypoint, FormationType.Lines);
           foreach (var waypoints in formation)
           {
-            waypoints.Value.AddWayPoint(waypoints.Key);
+            waypoints.Value.AddWayPoint(waypoints.Key,InputService.IsPressingShift() );
           }
         }
         else

@@ -21,13 +21,13 @@ namespace Assets.GalaxyCommand.Code.Game.Units
   {
     private Canvas _localCanvas;
     private NavMeshAgent _navMesh;
+    private NetworkTransform _networkTransform;
     private RectTransform _rectTransform;
     private GameObject _selectionImage;
     private Queue<Vector3> _wayPoints;
     public GameObject SelectionBox;
 
     public UnitSizeEnum UnitSize;
-    private NetworkTransform _networkTransform;
 
     protected static HashSet<BaseUnitController> AllUnits
     {
@@ -47,6 +47,8 @@ namespace Assets.GalaxyCommand.Code.Game.Units
       }
       set { _wayPoints = value; }
     }
+
+    public bool IsPatrolling { get; set; }
 
 
     public virtual void OnDeselect(BaseEventData eventData)
@@ -106,7 +108,15 @@ namespace Assets.GalaxyCommand.Code.Game.Units
     private void UpdateCheckWaypoints()
     {
       if (WayPoints.Any() && _navMesh.remainingDistance <= 0.5f)
-        CmdMove(WayPoints.Dequeue());
+      {
+        var nextWaypoint = WayPoints.Dequeue();
+        CmdMove(nextWaypoint);
+        if (IsPatrolling)
+        {
+          WayPoints.Enqueue(nextWaypoint);
+        }
+      }
+        
     }
 
 
@@ -172,9 +182,10 @@ namespace Assets.GalaxyCommand.Code.Game.Units
       _navMesh.SetDestination(position);
     }
 
-    public void AddWayPoint(Vector3 targetTransform)
+    public void AddWayPoint(Vector3 targetTransform, bool patrol)
     {
       WayPoints.Enqueue(targetTransform);
+      IsPatrolling = patrol;
     }
   }
 }
